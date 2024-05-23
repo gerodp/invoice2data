@@ -1,0 +1,43 @@
+issuer: Twitter International Company
+keywords:
+  - 'Twitter International Company'
+  - 'FACTURA'
+  - 'Id. de IVA: IE 9803175Q'
+
+fields:
+  invoice_number:
+    parser: regex
+    regex: 'Id\. de factura\s+(\d+)'
+  date:
+    parser: regex
+    regex: 'Fecha de emisión\s+(\d{1,2} de \w+ de \d{4})'
+    type: date
+  amount:
+    parser: regex
+    regex: 'Total incluido el IVA\s+(\d+,\d{2})\s+€'
+    type: float
+  client_name:
+    parser: regex
+    regex: 'Factura para\s+([\w\s]+)'
+  vat_number:
+    parser: regex
+    regex: 'Id\. de IVA:\s+([\w\d]+)'
+  vat_amount:
+    parser: regex
+    regex: 'Importe de IVA\s+(\d+,\d{2})\s+€'
+
+tables:
+  - start: Id. de factura
+    end: Spain
+    body: (?P<invoice_number>\s+(\d+))\s+(?P<client_address>[\S ]+)
+  - start: Fecha\s+Descripción\s+Importe [\S ]+
+    end: Total neto de IVA
+    body: (?P<date>\d{1,2} de \w+ de \d{4})\s+(?P<description>[\S ]+)\s+(?P<amount>\d+,\d{2})\s+€
+
+options:
+  remove_whitespace: false
+  currency: 'EUR'
+  date_formats:
+    - '%d de %B de %Y'
+  languages:
+    - 'es'

@@ -1,0 +1,25 @@
+issuer: Envato Pty Ltd
+keywords:
+  - 'Envato Market'
+  - 'envatomarket'
+  - 'Envato Pty Ltd'
+fields:
+  receipt_number:
+    parser: regex
+    regex: 'Receipt No:\s+(RCD\d+)'
+  date:
+    parser: regex
+    regex: 'Date:\s+(\d+ \w+ \d{4})'
+  total:
+    parser: regex
+    regex: 'Total\s+USD\s+(\d+\.\d{2})'
+  description:
+    parser: regex
+    regex: 'Description\s+Envato Credit to user\s+(.+)'
+options:
+  remove_whitespace: false
+  currency: USD
+  date_formats:
+    - '%d %B %Y'
+  languages:
+    - 'en'

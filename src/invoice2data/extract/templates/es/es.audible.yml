@@ -1,0 +1,29 @@
+issuer: Audible GmbH
+keywords:
+  - 'Audible GmbH'
+  - 'una empresa de amazon'
+fields:
+  invoice_number:
+    parser: regex
+    regex: 'Numero de la factura\s+(AUDDE-INV-ES-\d{4}-\d+)'
+  date:
+    parser: regex
+    regex: 'la entrega\s+(\d{1,2} \w+ \d{4})'
+    type: date
+  amount:
+    parser: regex
+    regex: 'Total pendiente\s+EUR\s+(\d+\.\d{2})'
+  vat_number:
+    parser: regex
+    regex: 'IVA # DE(\d+)'
+tables:
+  - start: EUR\s+\(IVA incluido\)
+    end: ASIN
+    body: \s+(?P<description>(?:\S(?:\s?\S)*)+)
+options:
+  remove_whitespace: false
+  currency: EUR
+  date_formats:
+    - '%d %b %Y'
+  languages:
+    - 'es'
