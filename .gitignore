@@ -67,3 +67,5 @@ target/
 
 local_test_data/
 inenv/
+
+.env

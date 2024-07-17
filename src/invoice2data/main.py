@@ -106,12 +106,13 @@ def extract_text_from_invoice(invoicefile, input_module=None):
 
     extracted_str = input_module.to_text(invoicefile)
     if not isinstance(extracted_str, str) or not extracted_str.strip():
-        logger.error(
-            "Failed to extract text from %s using %s",
+        logger.warning(
+            "Failed to extract text from %s using %s. Fallbacking to tesseract",
             invoicefile,
             input_module.__name__,
         )
-        return False
+
+        return None
 
     logger.debug(
         "START pdftotext result ===========================\n%s", extracted_str
@@ -284,28 +285,54 @@ def create_parser():
     )
 
     parser.add_argument(
-        "--dump-text",
+        "--dump_text",
         help="Dump all text from the input file into this specified file. Skips extraction.",
     )
 
     return parser
 
 
-def dump_invoce_text(input_files, dump_text_file, input_module=None):
+def dump_invoice_text(input_files, output_folder, input_module=None):
+
+    stats = {
+        "total": 0,
+        "success_w_pdftotext": 0,
+        "success_w_tesseract": 0,
+        "failed": 0,
+    }
+
     for f in input_files:
+        stats["total"] += 1
         try:
             # Assuming text is the default method to extract all text
             extracted_text = extract_text_from_invoice(f.name, input_module)
-            with open(dump_text_file, "a", encoding="utf-8") as dump_file:
-                dump_file.write(extracted_text + "\n")
-                dump_file.write(
-                    "\n\n\n++++++++++++++++++++++++++++ END INVOICE ({}) +++++++++++++++++++++++++++++\n\n\n".format(
-                        f.name
-                    )
+
+            if extracted_text:
+                stats["success_w_pdftotext"] += 1
+            else:
+                extracted_text = extract_text_from_invoice(
+                    f.name, input_mapping["tesseract"]
                 )
-            logger.info("Dumped text from %s to %s", f.name, dump_text_file)
+
+                if extracted_text:
+                    stats["success_w_tesseract"] += 1
+                else:
+                    stats["failed"] += 1
+                    logger.warning("Failed to extract text from %s", f.name)
+                    continue
+
+            # Construct the output file path with the new extension
+            base_name = os.path.splitext(os.path.basename(f.name))[0]
+            output_file_path = os.path.join(output_folder, base_name + ".txt")
+
+            with open(output_file_path, "w", encoding="utf-8") as dump_file:
+                dump_file.write(extracted_text)
+            logger.debug("Dumped text from %s to %s", f.name, output_file_path)
         except Exception as e:
             logger.error("Failed to dump text from %s. Error: %s", f.name, str(e))
+            stats["failed"] += 1
+
+    logger.info("Invoices extracted vs failed: %s", stats)
 
 
 def main(args=None):
@@ -326,7 +353,7 @@ def main(args=None):
     output_module = output_mapping[args.output_format]
 
     if args.dump_text:
-        return dump_invoce_text(args.input_files, args.dump_text, input_module)
+        return dump_invoice_text(args.input_files, args.dump_text, input_module)
 
     templates = []
 
